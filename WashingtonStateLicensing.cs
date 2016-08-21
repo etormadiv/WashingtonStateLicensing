@@ -26,7 +26,7 @@ namespace WashingtonStateLicensingClient
 			
 			WashingtonStateLicensing licensing = new WashingtonStateLicensing();
 			
-			var details = licensing.GetInfo(args[0]);
+			LicenseDetails details = licensing.GetInfo(args[0]);
 			
 			Console.WriteLine("License Details:");
 			
@@ -43,24 +43,52 @@ namespace WashingtonStateLicensingClient
 	
 	public class WashingtonStateLicensing
 	{
+		/// <summary>
+		/// The base Url that the requests will be based on.
+		/// </summary>
+		private const string baseUrl = "https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/";
 		
+		/// <summary>
+		/// The user agent that will be used to perform the requests.
+		/// </summary>
+		private const string userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36";
+		
+		/// <summary>
+		/// A Container that will hold the cookies.
+		/// </summary>
 		private CookieContainer cookieContainer;
 		
+		/// <summary>
+		/// Holds the value of the __VIEWSTATE input.
+		/// </summary>
 		private string __VIEWSTATE;
 		
+		/// <summary>
+		/// Holds the value of the __VIEWSTATEGENERATOR input.
+		/// </summary>
 		private string __VIEWSTATEGENERATOR;
 		
+		/// <summary>
+		/// Holds the value of the __EVENTVALIDATION input.
+		/// </summary>
 		private string __EVENTVALIDATION;
 		
+		/// <summary>
+		/// The default constructor.
+		/// </summary>
 		public WashingtonStateLicensing()
 		{
 			Initialize();
 		}
 		
+		/// <summary>
+		/// Initialize our object to the required values.
+		/// It is not intended to be called from your code directly.
+		/// </summary>
 		private void Initialize()
 		{
-			var hwr = (HttpWebRequest) WebRequest.Create("https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/");
-			hwr.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36";
+			var hwr = (HttpWebRequest) WebRequest.Create(baseUrl);
+			hwr.UserAgent = userAgent;
 			
 			cookieContainer = new CookieContainer();
 			hwr.CookieContainer = cookieContainer;
@@ -78,14 +106,12 @@ namespace WashingtonStateLicensingClient
 				}
 			}
 			
-			using( var writer = new StreamWriter("wa_licensing_1.htm") )
-			{
-				writer.WriteLine(response);
-			}
-			
 			GetCurrentState(response);
 		}
 		
+		/// <summary>
+		/// Allows to update the values VIEWSTATE, VIEWSTATEGENERATOR and EVENTVALIDATION
+		/// </summary>
 		private void GetCurrentState(string response)
 		{
 			int index = response.IndexOf("id=\"__VIEWSTATE\" value=") + 24;
@@ -104,14 +130,16 @@ namespace WashingtonStateLicensingClient
 			__EVENTVALIDATION = response.Substring(index, length);
 		}
 		
+		/// <summary>
+		/// Allows to simulate the Search button click.
+		/// </summary>
 		private void SimulateSearchClick(string licenseNumber)
 		{
-			var hwr = (HttpWebRequest) WebRequest.Create("https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/default.aspx");
+			var hwr = (HttpWebRequest) WebRequest.Create( baseUrl + "default.aspx");
 			hwr.Method      = "POST";
 			hwr.ContentType = "application/x-www-form-urlencoded";
-			hwr.UserAgent   = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36";
-			hwr.Referer     = "https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/";
-			hwr.Accept      = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+			hwr.UserAgent   = userAgent;
+			hwr.Referer     = baseUrl;
 			
 			hwr.CookieContainer = cookieContainer;
 			
@@ -147,22 +175,19 @@ namespace WashingtonStateLicensingClient
 				}
 			}
 			
-			using( var writer = new StreamWriter("wa_licensing_2.htm") )
-			{
-				writer.WriteLine(response);
-			}
-			
 			GetCurrentState(response);
 		}
 		
+		/// <summary>
+		/// Allows to simulate the upper continue button click.
+		/// </summary>
 		private string SimulateUpperContinue()
 		{
-			var hwr = (HttpWebRequest) WebRequest.Create("https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/lqsNarrow.aspx?NSL=299BAI&Narrow=1");
+			var hwr = (HttpWebRequest) WebRequest.Create( baseUrl + "lqsNarrow.aspx?NSL=299BAI&Narrow=1");
 			hwr.Method      = "POST";
 			hwr.ContentType = "application/x-www-form-urlencoded";
-			hwr.UserAgent   = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36";
-			hwr.Referer     = "https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/lqsNarrow.aspx?NSL=299BAI&Narrow=1";
-			hwr.Accept      = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+			hwr.UserAgent   = userAgent;
+			hwr.Referer     = baseUrl + "lqsNarrow.aspx?NSL=299BAI&Narrow=1";
 			
 			hwr.CookieContainer = cookieContainer;
 			
@@ -201,23 +226,20 @@ namespace WashingtonStateLicensingClient
 				throw new Exception("No matches were found for your search.");
 			}
 			
-			using( var writer = new StreamWriter("wa_licensing_3.htm") )
-			{
-				writer.WriteLine(response);
-			}
-			
 			int index = response.IndexOf("lqsLicenseDetail.aspx?RefID") + 28;
 			int length = response.IndexOf("\"", index) - index;
 			
 			return response.Substring(index, length);
 		}
 		
+		/// <summary>
+		/// Allows to get the details using the RefID.
+		/// </summary>
 		private LicenseDetails GetInfoByReferenceId(string refId)
 		{
-			var hwr = (HttpWebRequest) WebRequest.Create("https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/lqsLicenseDetail.aspx?RefID=" + refId);
-			hwr.UserAgent   = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36";
-			hwr.Referer     = "https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery/lqsSearchResults.aspx";
-			hwr.Accept      = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8";
+			var hwr = (HttpWebRequest) WebRequest.Create( baseUrl + "lqsLicenseDetail.aspx?RefID=" + refId);
+			hwr.UserAgent   = userAgent;
+			hwr.Referer     = baseUrl + "lqsSearchResults.aspx";
 			
 			hwr.CookieContainer = cookieContainer;
 			
@@ -234,42 +256,36 @@ namespace WashingtonStateLicensingClient
 				}
 			}
 			
-			using( var writer = new StreamWriter("wa_licensing_4.htm") )
-			{
-				writer.WriteLine(response);
-			}
-			
 			LicenseDetails details = new LicenseDetails();
 			
-			int index = response.IndexOf("Name:");
-			details.Name = GetText(response, ref index);
+			int index = 0;
 			
-			index = response.IndexOf("License Type:", index);
-			details.LicenseType = GetText(response, ref index);
+			details.Name = GetText("Name:", response, ref index);
 			
-			index = response.IndexOf("License Number:", index);
-			details.LicenseNumber = GetText(response, ref index);
+			details.LicenseType = GetText("License Type:", response, ref index);
 			
-			index = response.IndexOf("License Status:", index);
-			details.LicenseStatus = GetText(response, ref index);
+			details.LicenseNumber = GetText("License Number:", response, ref index);
 			
-			index = response.IndexOf("First Issued Date:", index);
-			details.FirstIssuedDate = GetText(response, ref index);
+			details.LicenseStatus = GetText("License Status:", response, ref index);
 			
-			index = response.IndexOf("License Issued:", index);
-			details.LicenseIssued = GetText(response, ref index);
+			details.FirstIssuedDate = GetText("First Issued Date:", response, ref index);
 			
-			index = response.IndexOf("Expiration Date:", index);
-			details.ExpirationDate = GetText(response, ref index);
+			details.LicenseIssued = GetText("License Issued:", response, ref index);
 			
-			index = response.IndexOf("Address:", index);
-			details.Address = GetText(response, ref index, true);
+			details.ExpirationDate = GetText("Expiration Date:", response, ref index);
+			
+			details.Address = GetText("Address:", response, ref index, true);
 			
 			return details;
 		}
 		
-		private string GetText(string response, ref int index, bool isAddress = false)
+		/// <summary>
+		/// Allows to get desired information from the HTML content.
+		/// </summary>
+		private string GetText(string desiredInfo, string response, ref int index, bool isAddress = false)
 		{
+			index = response.IndexOf(desiredInfo, index);
+			
 			index = response.IndexOf(">", index) + 1;
 			index = response.IndexOf(">", index) + 1;
 			
@@ -284,6 +300,9 @@ namespace WashingtonStateLicensingClient
 			return isAddress ? response.Substring(index, length).Replace("<BR>", "\n") : response.Substring(index, length);
 		}
 		
+		/// <summary>
+		/// Allows to get the License Details for a specific License Number.
+		/// </summary>
 		public LicenseDetails GetInfo(string licenseNumber)
 		{
 			SimulateSearchClick(licenseNumber);
