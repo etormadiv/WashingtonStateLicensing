@@ -110,8 +110,9 @@ namespace WashingtonStateLicensingClient
 		}
 		
 		/// <summary>
-		/// Allows to update the values VIEWSTATE, VIEWSTATEGENERATOR and EVENTVALIDATION
+		/// Allows to update the values VIEWSTATE, VIEWSTATEGENERATOR and EVENTVALIDATION that is used by ASP.NET.
 		/// </summary>
+		/// <param name="response"> A raw HTML response. </param>
 		private void GetCurrentState(string response)
 		{
 			int index = response.IndexOf("id=\"__VIEWSTATE\" value=") + 24;
@@ -133,6 +134,7 @@ namespace WashingtonStateLicensingClient
 		/// <summary>
 		/// Allows to simulate the Search button click.
 		/// </summary>
+		/// <param name="licenseNumber"> The License Number that we want to extract its details. </param>
 		private void SimulateSearchClick(string licenseNumber)
 		{
 			var hwr = (HttpWebRequest) WebRequest.Create( baseUrl + "default.aspx");
@@ -181,6 +183,7 @@ namespace WashingtonStateLicensingClient
 		/// <summary>
 		/// Allows to simulate the upper continue button click.
 		/// </summary>
+		/// <returns> Returns the Reference Id. </returns>
 		private string SimulateUpperContinue()
 		{
 			var hwr = (HttpWebRequest) WebRequest.Create( baseUrl + "lqsNarrow.aspx?NSL=299BAI&Narrow=1");
@@ -233,8 +236,10 @@ namespace WashingtonStateLicensingClient
 		}
 		
 		/// <summary>
-		/// Allows to get the details using the RefID.
+		/// Allows to get the details using the Reference ID.
 		/// </summary>
+		/// <param name="refId"> The refernce Id that will be used to get the License Details. </param>
+		/// <returns> Returns a LicenseDetails object containing the extracted License Details. </returns>
 		private LicenseDetails GetInfoByReferenceId(string refId)
 		{
 			var hwr = (HttpWebRequest) WebRequest.Create( baseUrl + "lqsLicenseDetail.aspx?RefID=" + refId);
@@ -282,6 +287,11 @@ namespace WashingtonStateLicensingClient
 		/// <summary>
 		/// Allows to get desired information from the HTML content.
 		/// </summary>
+		/// <param name="desiredInfo"> A string describing the information to extract. </param>
+		/// <param name="response"> A raw HTML response. </param>
+		/// <param name="index"> An index that is used to keep the operation of extraction fine. </param>
+		/// <param name="isAddress"> Specify if we want to extract the address. </param>
+		/// <returns> Returns the desired data. </returns>
 		private string GetText(string desiredInfo, string response, ref int index, bool isAddress = false)
 		{
 			index = response.IndexOf(desiredInfo, index);
@@ -303,6 +313,8 @@ namespace WashingtonStateLicensingClient
 		/// <summary>
 		/// Allows to get the License Details for a specific License Number.
 		/// </summary>
+		/// <param name="licenseNumber"> The License Number that we want to extract its details. </param>
+		/// <returns> Returns a LicenseDetails object that contains the desired License Details. </returns>
 		public LicenseDetails GetInfo(string licenseNumber)
 		{
 			SimulateSearchClick(licenseNumber);
